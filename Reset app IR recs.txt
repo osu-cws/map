@@ -1,0 +1,37 @@
+For ticket 0438589: Scholarship portions of IRs not populating, fixed the issue with a date change in the parameters table in Banner, but needed to reset those IRs so they could be re-scored. This found them, and the IRP record in SAAADMS was deleted by hand.
+
+
+--SARRRAT
+select f_getspridenid(saradap_pidm), 
+(select robusdf_value_21
+                from robusdf
+                where robusdf_pidm = saradap_pidm
+                and robusdf_aidy_code = '1718'
+                and ((robusdf_value_21 is null)
+                      or
+                      (robusdf_value_21 = 'LATE'))
+                )
+from saradap
+where trunc(SARADAP_APPL_DATE) = '02-FEB-2017'
+and saradap_levl_code = '01'
+and saradap_styp_code <> 'T'
+and saradap_admt_code not like 'R%'
+--and saradap_apst_code <> 'I'
+and saradap_camp_code in ('C', 'B')
+and SARADAP_RESD_CODE = 'R'
+and exists (select 'Y'
+                from robusdf
+                where robusdf_pidm = saradap_pidm
+                and ((robusdf_value_21 is null)
+                      or
+                      (robusdf_value_21 = 'LATE'))
+                )
+                and exists (select 'Y'
+                              from sarchkl
+                              where sarchkl_pidm = saradap_pidm
+                              and sarchkl_admr_code = 'FC'
+                              and trunc(sarchkl_receive_date) <= '01-FEB-2017' )
+and 3.85 <= (SELECT MAX(NVL(REGEXP_SUBSTR(c.sorhsch_GPA,'([.][0-9]+)|([0-9]+([.][0-9]+)?)',1,1), '0.0'))
+              from sorhsch c
+where c.sorhsch_pidm = saradap_pidm)                              
+            ;
